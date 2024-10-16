@@ -9,11 +9,18 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.11"
 pandas = "^2.2.2"
-numpy = "^2.1.1"
+numpy = "^2.0.2"
 jupyter = "^1.1.1"
 matplotlib = "^3.9.2"
 scikit-learn = "^1.5.2"
 tqdm = "^4.66.5"
+scikit-misc = "^0.5.1"
+scikit-fda = {git = "https://github.com/GAA-UAM/scikit-fda.git", rev = "develop"}
+numba = "^0.60.0"
+llvmlite = "^0.43.0"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
