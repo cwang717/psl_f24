@@ -189,8 +189,8 @@ num_cols = [col for col in num_cols if col not in col_to_drop]
 
 col_trans = ColumnTransformer(transformers=[
     ('num_p', num_pipeline, num_cols),
-    ('ode_p', ode_pipeline, ode_cols),
-    ('ohe_p', ohe_pipeline, ohe_cols),
+    # ('ode_p', ode_pipeline, ode_cols),
+    ('ohe_p', ohe_pipeline, ode_cols + ohe_cols),
     ],
     remainder='drop', 
     n_jobs=-1)
@@ -216,12 +216,12 @@ def load_X_y(fold_num, col_trans, test=False):
         y = pd.read_csv(f"proj1/fold{fold_num}/test_y.csv")
         df = df.merge(y, on='PID')
 
-    # fill missing values
-    df.fillna(
-        {'Garage_Yr_Blt': 2009, 
-         'Misc_Feature': 'NA', 
-         'Mas_Vnr_Type': 'NA'}, 
-        inplace=True)
+    # # fill missing values
+    # df.fillna(
+    #     {'Garage_Yr_Blt': 2009, 
+    #      'Misc_Feature': 'NA', 
+    #      'Mas_Vnr_Type': 'NA'}, 
+    #     inplace=True)
     
     # filter out outliers
     df = df[(df['Lot_Frontage'] < 250)
@@ -241,7 +241,7 @@ def load_X_y(fold_num, col_trans, test=False):
 
     return X, y
 
-%%
+# %%
 param_grid_XGB = {
     'learning_rate': [0.05, 0.075],
     'n_estimators': [5000, 6000],
@@ -305,7 +305,7 @@ def lasso_ridge_model(X_train, y_train, X_test, y_test):
 
 # %%
 # Now run the cross-validation
-for i in range(1, 11):
+for i in tqdm(range(1, 11)):
     X_train, y_train = load_X_y(i, col_trans)
     X_test, y_test = load_X_y(i, col_trans, test=True)
     threshold = 0.125 if i < 6 else 0.135
@@ -313,29 +313,29 @@ for i in range(1, 11):
     # XGBoost model
     xgb_final = XGBRegressor(random_state=seed, 
                              learning_rate=0.05, 
-                             max_depth=6, 
-                             n_estimators=6000, 
-                             subsample=0.6)
+                             max_depth=5, 
+                             n_estimators=5000, 
+                             subsample=0.7)
     xgb_final.fit(X_train, y_train)
     xgb_predictions = xgb_final.predict(X_test)
     xgb_rmse = mean_squared_error(y_test, xgb_predictions, squared=False)
 
-    # ElasticNetCV model
-    elastic_net_cv = ElasticNetCV(l1_ratio=[.1, .5, .7, .9, .95, .99, 1],
-                                  alphas=[0.0001, 0.001, 0.01, 0.1, 1, 10],
-                                  cv=5,
-                                  random_state=seed)
-    elastic_net_cv.fit(X_train, y_train)
-    elastic_net_cv_predictions = elastic_net_cv.predict(X_test)
-    elastic_net_cv_rmse = mean_squared_error(y_test, elastic_net_cv_predictions, squared=False)
+    # # ElasticNetCV model
+    # elastic_net_cv = ElasticNetCV(l1_ratio=[.1, .5, .7, .9, .95, .99, 1],
+    #                               alphas=[0.0001, 0.001, 0.01, 0.1, 1, 10],
+    #                               cv=5,
+    #                               random_state=seed)
+    # elastic_net_cv.fit(X_train, y_train)
+    # elastic_net_cv_predictions = elastic_net_cv.predict(X_test)
+    # elastic_net_cv_rmse = mean_squared_error(y_test, elastic_net_cv_predictions, squared=False)
 
     # Lasso-Ridge model
     lasso_ridge_predictions, lasso_ridge_rmse = lasso_ridge_model(X_train, y_train, X_test, y_test)
 
     if xgb_rmse > threshold:
         print(f"Fold {i} XGBoost RMSE:", xgb_rmse)
-    if elastic_net_cv_rmse > threshold:
-        print(f"Fold {i} ElasticNetCV RMSE:", elastic_net_cv_rmse)
+    # if elastic_net_cv_rmse > threshold:
+    #     print(f"Fold {i} ElasticNetCV RMSE:", elastic_net_cv_rmse)
     if lasso_ridge_rmse > threshold:
         print(f"Fold {i} Lasso-Ridge RMSE:", lasso_ridge_rmse)
 
