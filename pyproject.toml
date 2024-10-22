@@ -18,6 +18,9 @@ scikit-misc = "^0.5.1"
 scikit-fda = {git = "https://github.com/GAA-UAM/scikit-fda.git", rev = "develop"}
 numba = "^0.60.0"
 llvmlite = "^0.43.0"
+seaborn = "^0.13.2"
+xgboost = "^2.1.1"
+feature-engine = "^1.8.1"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
