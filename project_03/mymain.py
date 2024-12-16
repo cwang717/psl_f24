@@ -1,5 +1,6 @@
 # %%
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -12,30 +13,21 @@ seed = 9601
 np.random.seed(seed)
 
 # %%
-
-
-
-# %%
-def main(eval_flag=False):
-    curr_dir = os.getcwd()
-    # Load data
+def main(eval_flag=False, save_model=False):
     train = pd.read_csv('train.csv')
     test = pd.read_csv('test.csv')
 
     train_X, train_y = train.iloc[:, 3:], train.iloc[:, 1]
     test_X = test.iloc[:, 2:]
 
-    # Fixed alpha (l1_ratio) value
     alpha = 0.5
     
     # Define lambda values to try (via C = 1/lambda)
-    # Using logarithmic scale is common for regularization parameters
     C_values = [2.782559] #np.logspace(-4, 4, 10)  # Creates 10 points between 10^-4 and 10^4
     best_score = 0
     best_C = None
     best_model = None
 
-    # Try different C values and perform cross-validation
     for C in tqdm(C_values, desc="Tuning"):
         model = LogisticRegression(
             penalty='elasticnet',
@@ -62,10 +54,11 @@ def main(eval_flag=False):
 
     print(f"Best C (1/lambda): {best_C:.6f}")
     
-    # Train final model with best C value
     best_model.fit(train_X, train_y)
+    if save_model:
+        with open('best_model.pkl', 'wb') as f:
+            pickle.dump(best_model, f)
     
-    # Make predictions
     test_pred = best_model.predict_proba(test_X)[:, 1]
     test_results = pd.DataFrame({
         'id': test['id'],
